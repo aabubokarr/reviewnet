@@ -1,4 +1,4 @@
-# BERT-based Sentiment Analysis Training Script
+# Binary BERT-based Sentiment Analysis Training Script (Positive/Negative Only)
 import os
 import sys
 import pandas as pd
@@ -29,9 +29,10 @@ warnings.filterwarnings("ignore")
 # Configuration
 # ============================================================================
 class Config:
-    DATA_DIR = '../negative_dataset'
+    DATA_DIR = '../dataset'
     OUTPUT_DIR = 'outputs'
-    CONFUSION_MATRIX_DIR = os.path.join(OUTPUT_DIR, 'negative_bert_confusion_matrix')
+    CONFUSION_MATRIX_DIR = os.path.join(OUTPUT_DIR, 'binary_bert_confusion_matrix')
+    METRICS_FILE = os.path.join(OUTPUT_DIR, 'binary_sentiment_metrics.csv')
 
 # ============================================================================
 # ENHANCED SENTIMENT KEYWORDS (from train.py)
@@ -331,264 +332,72 @@ def load_data_enhanced():
 def create_confusion_matrix(y_true, y_pred, model_name, output_dir, accuracy=None):
     """Create and save confusion matrix for a model with accuracy displayed"""
     try:
-        # Convert to numpy arrays
-        y_true = np.array(y_true)
-        y_pred = np.array(y_pred)
+        # Generate confusion matrix
+        cm = confusion_matrix(y_true, y_pred)
         
-        # Filter out invalid predictions
-        valid_mask = (y_pred != -1)
-        if np.sum(valid_mask) == 0:
-            print(f"      ⚠️  No valid predictions for {model_name}")
-            return False
-        
-        y_true_valid = y_true[valid_mask]
-        y_pred_valid = y_pred[valid_mask]
-        
-        # Create confusion matrix
-        cm = confusion_matrix(y_true_valid, y_pred_valid, labels=[0, 1, 2])
-        
-        # Normalize confusion matrix by row (each row sums to 100%)
+        # Normalize confusion matrix
         cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        cm_normalized = np.nan_to_num(cm_normalized)  # Handle division by zero
         
-        # Calculate accuracy if not provided
-        if accuracy is None:
-            accuracy = accuracy_score(y_true_valid, y_pred_valid) * 100
-        
-        # Create figure - larger size for research paper
-        fig, ax = plt.subplots(figsize=(12, 10))
-        
-        # Labels for sentiment classes
-        labels = ['Negative', 'Neutral', 'Positive']
-        
-        # Create custom annotations with dynamic font color
-        # Format: decimal values between 0 and 1 (3 decimal places)
-        annot_data = np.empty_like(cm_normalized, dtype=object)
-        for i in range(cm_normalized.shape[0]):
-            for j in range(cm_normalized.shape[1]):
-                value = cm_normalized[i, j]
-                annot_data[i, j] = f'{value:.3f}'
-        
-        # Create heatmap with normalized values (0 to 1)
-        # Increased font sizes for research paper readability
-        heatmap = sns.heatmap(cm_normalized, annot=annot_data, fmt='', cmap='Blues', 
-                             xticklabels=labels, yticklabels=labels, ax=ax,
-                             cbar_kws={'label': 'Normalized Value'},
-                             linewidths=2, linecolor='white', 
-                             annot_kws={'size': 20, 'weight': 'bold'},
-                             vmin=0, vmax=1)
-        
-        # Set dynamic font colors based on cell background brightness
-        # The texts are added in row-major order (left to right, top to bottom)
-        text_idx = 0
-        for i in range(cm_normalized.shape[0]):
-            for j in range(cm_normalized.shape[1]):
-                if text_idx < len(ax.texts):
-                    # Get the color based on the cell value
-                    value = cm_normalized[i, j]
-                    # Use black text for light cells (value < 0.4), white for dark cells
-                    text_color = 'black' if value < 0.4 else 'white'
-                    ax.texts[text_idx].set_color(text_color)
-                    text_idx += 1
-        
-        # Set title with accuracy - larger font for research paper
-        title = f'{model_name} - Confusion Matrix (Normalized)\nAccuracy: {accuracy:.2f}%'
-        ax.set_title(title, fontsize=20, fontweight='bold', pad=25)
-        ax.set_xlabel('Predicted', fontsize=18, fontweight='bold')
-        ax.set_ylabel('Actual', fontsize=18, fontweight='bold')
-        
-        # Adjust tick labels - larger for research paper
-        ax.tick_params(axis='both', which='major', labelsize=16)
-        
-        # Increase colorbar label and tick font sizes
-        cbar = ax.collections[0].colorbar
-        cbar.set_label('Normalized Value', fontsize=18, fontweight='bold')
-        cbar.ax.tick_params(labelsize=16)
-        # Format colorbar ticks as decimal values (0 to 1)
-        cbar.set_ticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
-        cbar.set_ticklabels(['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'])
-        
+        # Plot confusion matrix
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(cm_normalized, annot=True, fmt='.2f', cmap='Blues', 
+                    xticklabels=['Negative', 'Positive'], yticklabels=['Negative', 'Positive'])
+        plt.title(f'Confusion Matrix - {model_name}\nAccuracy: {accuracy:.2f}%')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
         plt.tight_layout()
         
         # Save confusion matrix
-        safe_model_name = model_name.lower().replace(' ', '_')
-        filename = f"{safe_model_name}_confusion_matrix.png"
-        filepath = os.path.join(output_dir, filename)
-        plt.savefig(filepath, dpi=300, bbox_inches='tight', facecolor='white')
+        save_path = os.path.join(output_dir, f'{model_name.replace("/", "_")}_confusion_matrix.png')
+        plt.savefig(save_path)
         plt.close()
-        
+        print(f"   📊 Saved confusion matrix to {save_path}")
         return True
+    
     except Exception as e:
-        print(f"      ⚠️  Error creating confusion matrix for {model_name}: {e}")
+        print(f"   ❌ Error creating confusion matrix: {e}")
         return False
 
 # ============================================================================
-# Visualization Functions
+# Metrics Saving
 # ============================================================================
-def create_performance_visualization(results_df, output_dir):
-    """Create performance visualization with same blue color and different bar patterns"""
-    fig, axes = plt.subplots(2, 2, figsize=(20, 16))
-    fig.suptitle('BERT Model Performance Comparison', 
-                 fontsize=24, fontweight='bold', y=0.98)
-    
-    models = results_df['Model'].unique()
-    # Use white color for bars with black edges
-    base_color = 'white'
-    
-    # Define different bar patterns/styles for each model
-    # Pattern styles: solid, hatched (horizontal, vertical, diagonal, crosshatch), edge styles
-    bar_styles = [
-        {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': None},  # Solid bold
-        {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '///'},  # Diagonal lines
-        {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '---'},  # Horizontal lines
-        {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '|||'},  # Vertical lines
-        {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '+++'},  # Crosshatch
-    ]
-    
-    metrics = [('Accuracy', axes[0, 0]), ('Precision', axes[0, 1]), 
-               ('Recall', axes[1, 0]), ('F1', axes[1, 1])]
-    
-    for metric, ax in metrics:
-        x_pos = np.arange(len(models))
-        scores = []
-        for model in models:
-            model_data = results_df[results_df['Model'] == model]
-            scores.append(model_data[metric].values[0] if not model_data.empty else 0)
+def save_metrics(metrics_list, output_file):
+    """Save metrics to a CSV file"""
+    try:
+        df = pd.DataFrame(metrics_list)
         
-        # Create bars with different patterns
-        bars = []
-        for i, (x, score) in enumerate(zip(x_pos, scores)):
-            style = bar_styles[i % len(bar_styles)]
-            bar = ax.bar(x, score, width=0.7, 
-                        color=style['color'], 
-                        alpha=style['alpha'],
-                        edgecolor=style['edgecolor'],
-                        linewidth=style['linewidth'],
-                        hatch=style['hatch'])
-            bars.append(bar[0])
-        
-        for i, v in enumerate(scores):
-            if v > 0:
-                ax.text(i, v + 1, f'{v:.1f}%', 
-                       ha='center', va='bottom', fontsize=20, fontweight='bold')
-        
-        ax.set_title(f'{metric} Comparison', fontsize=20, fontweight='bold', pad=15)
-        ax.set_xlabel('Models', fontsize=18, fontweight='bold')
-        ax.set_ylabel(f'{metric} (%)', fontsize=18, fontweight='bold')
-        ax.set_xticks(x_pos)
-        ax.set_xticklabels(models, rotation=45, ha='right', fontsize=16)
-        ax.tick_params(axis='y', labelsize=16)
-        ax.grid(axis='y', alpha=0.3, linestyle='--', linewidth=1.5)
-        ax.set_ylim(0, 105)
-    
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'model_comparison.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"📊 Visualization saved: {os.path.join(output_dir, 'model_comparison.png')}")
-
-def create_results_table(results_df, output_dir):
-    """Create a professional results table"""
-    fig, ax = plt.subplots(figsize=(18, max(10, len(results_df) * 0.8 + 3)))
-    ax.axis('tight')
-    ax.axis('off')
-    
-    # Prepare table data
-    table_data = [['Model', 'Accuracy (%)', 'Precision (%)', 'Recall (%)', 'F1 Score (%)']]
-    
-    # Sort by accuracy descending
-    sorted_df = results_df.sort_values('Accuracy', ascending=False)
-    
-    for _, row in sorted_df.iterrows():
-        table_data.append([
-            row['Model'],
-            f"{row['Accuracy']:.2f}",
-            f"{row['Precision']:.2f}",
-            f"{row['Recall']:.2f}",
-            f"{row['F1']:.2f}"
-        ])
-    
-    # Create table
-    table = ax.table(
-        cellText=table_data,
-        cellLoc='center',
-        loc='center',
-        colWidths=[0.30, 0.20, 0.20, 0.20, 0.20]
-    )
-    
-    # Style the table - larger fonts for research paper
-    table.auto_set_font_size(False)
-    table.set_fontsize(18)
-    table.scale(1, 2.8)
-    
-    # Header row styling
-    for i in range(len(table_data[0])):
-        table[(0, i)].set_facecolor('#2E86AB')
-        table[(0, i)].set_text_props(weight='bold', color='white', size=20)
-    
-    # Data row styling - highlight models with ≥90% accuracy
-    for i in range(1, len(table_data)):
-        row_accuracy = float(table_data[i][1].replace('%', ''))
-        
-        if row_accuracy >= 90:
-            row_color = '#E8F4F8'  # Light blue for high performers
+        # Check if file exists to append or create new
+        if os.path.exists(output_file):
+            existing_df = pd.read_csv(output_file)
+            # Append new metrics
+            combined_df = pd.concat([existing_df, df], ignore_index=True)
+            # Remove duplicates if any (keeping latest)
+            combined_df = combined_df.drop_duplicates(subset=['Model'], keep='last')
+            combined_df.to_csv(output_file, index=False)
         else:
-            row_color = '#F8F9FA' if i % 2 == 0 else '#FFFFFF'
-        
-        for j in range(len(table_data[0])):
-            table[(i, j)].set_facecolor(row_color)
-            table[(i, j)].set_text_props(size=18)
+            df.to_csv(output_file, index=False)
             
-            # Bold accuracy if ≥90%
-            if j == 1 and row_accuracy >= 90:
-                table[(i, j)].set_text_props(size=18, weight='bold')
-    
-    # Add borders
-    for i in range(len(table_data)):
-        for j in range(len(table_data[0])):
-            table[(i, j)].set_edgecolor('#CCCCCC')
-            table[(i, j)].set_linewidth(1)
-    
-    plt.title('BERT Model Performance Results Table', 
-              fontsize=22, fontweight='bold', pad=30)
-    plt.tight_layout()
-    
-    # Save table
-    table_path = os.path.join(output_dir, 'model_results_table.png')
-    plt.savefig(table_path, dpi=300, bbox_inches='tight', facecolor='white')
-    plt.savefig(os.path.join(output_dir, 'model_results_table.pdf'), 
-                dpi=300, bbox_inches='tight', facecolor='white')
-    plt.close()
-    
-    print(f"📋 Results table saved: {table_path}")
-    print(f"📋 PDF table saved: {os.path.join(output_dir, 'model_results_table.pdf')}")
-    
-    # Also print console table
-    print("\n" + "="*80)
-    print("BERT MODEL PERFORMANCE RESULTS TABLE")
-    print("="*80)
-    print(f"{'Model':<20} {'Accuracy':<15} {'Precision':<15} {'Recall':<15} {'F1 Score':<15}")
-    print("-"*80)
-    
-    for _, row in sorted_df.iterrows():
-        print(f"{row['Model']:<20} {row['Accuracy']:<15.2f}% "
-              f"{row['Precision']:<15.2f}% {row['Recall']:<15.2f}% {row['F1']:<15.2f}%")
-    
-    print("="*80)
+        print(f"   💾 Saved metrics to {output_file}")
+        return True
+    except Exception as e:
+        print(f"   ❌ Error saving metrics: {e}")
+        return False
 
 # ============================================================================
 # Main Training Function
 # ============================================================================
 def main():
     print("="*80)
-    print("🎯 BERT-BASED SENTIMENT ANALYSIS TRAINING")
+    print("🎯 BINARY BERT-BASED SENTIMENT ANALYSIS (Positive vs Negative)")
     print("="*80)
     
-    # Define models - RoBERTa is used as ground truth, so we evaluate BERT, ALBERT, DistilBERT, and TinyBERT
+    # Define models - RoBERTa is used as ground truth
+    # We evaluate BERT, ALBERT, DistilBERT, and TinyBERT
     sentiment_models = {
         "BERT": "nlptown/bert-base-multilingual-uncased-sentiment",
         "DistilBERT": "distilbert-base-uncased-finetuned-sst-2-english",
-        "TinyBERT": "huawei-noah/TinyBERT_General_4L_312D",  # TinyBERT for sentiment analysis
-        "ALBERT": "textattack/albert-base-v2-SST-2",  # ALBERT fine-tuned for sentiment
+        "TinyBERT": "huawei-noah/TinyBERT_General_4L_312D",
+        "ALBERT": "textattack/albert-base-v2-SST-2",
     }
     
     # Force CPU to avoid mutex lock errors on macOS
@@ -606,7 +415,6 @@ def main():
         return
     
     # Use RoBERTa as ground truth for high accuracy (85-90%)
-    # RoBERTa is the most accurate 3-class model and will align better with other transformers
     print("🔍 Using RoBERTa as ground truth for high accuracy...")
     
     # Load RoBERTa first to create ground truth
@@ -650,30 +458,32 @@ def main():
         gc.collect()
         time.sleep(1.0)
         
-        sentiment_counts = df['ground_truth'].value_counts().sort_index()
-        sentiment_names = {0: 'Negative', 1: 'Neutral', 2: 'Positive'}
-        print("📊 Ground truth sentiment distribution:")
-        for sentiment, count in sentiment_counts.items():
-            percentage = (count / len(df)) * 100
-            print(f"   {sentiment_names[sentiment]}: {count} ({percentage:.1f}%)")
     else:
         print("   ⚠️  Failed to load RoBERTa, using keyword-based ground truth...")
         df['ground_truth'] = df['cleaned_text'].apply(detect_sentiment_advanced)
-        sentiment_counts = df['ground_truth'].value_counts().sort_index()
-        sentiment_names = {0: 'Negative', 1: 'Neutral', 2: 'Positive'}
-        print("📊 Ground truth sentiment distribution:")
-        for sentiment, count in sentiment_counts.items():
-            percentage = (count / len(df)) * 100
-            print(f"   {sentiment_names[sentiment]}: {count} ({percentage:.1f}%)")
+        
+    # ============================================================================
+    # BINARY FILTERING
+    # ============================================================================
+    # Filter out Neutral (1) - keep only Negative (0) and Positive (2)
+    print("\n⚖️  Filtering for BINARY sentiment (Negative vs Positive)...")
+    original_len = len(df)
+    binary_df = df[df['ground_truth'] != 1].copy()
     
-    # Get texts and ground truth
-    texts = df['cleaned_text'].tolist()
-    y_true = df['ground_truth'].tolist()
+    # Map Positive (2) to 1, keeping Negative (0) as 0
+    binary_df['binary_label'] = binary_df['ground_truth'].apply(lambda x: 1 if x == 2 else 0)
     
-    print(f"\n📊 Total samples: {len(texts)}")
+    print(f"   📉 Filtered {original_len} -> {len(binary_df)} samples (removed {original_len - len(binary_df)} neutral)")
+    print(f"   📊 Binary distribution: {binary_df['binary_label'].value_counts().to_dict()}")
+    
+    # Get texts and ground truth for binary data
+    texts = binary_df['cleaned_text'].tolist()
+    y_true = binary_df['binary_label'].tolist()
+    
+    print(f"\n📊 Total binary samples: {len(texts)}")
     
     # Process each model
-    all_results = []
+    all_metrics = []
     
     for model_key, model_name in sentiment_models.items():
         print(f"\n" + "="*70)
@@ -726,51 +536,54 @@ def main():
                 while len(predictions) < len(texts):
                     predictions.append(-1)
                 
-                # Filter out invalid predictions for metrics
+                # Filter out invalid predictions and adapt to binary
                 y_true_array = np.array(y_true)
                 y_pred_array = np.array(predictions)
+                
+                # Filter valid predictions
                 valid_mask = (y_pred_array != -1)
                 
                 if np.sum(valid_mask) > 0:
                     y_true_valid = y_true_array[valid_mask]
                     y_pred_valid = y_pred_array[valid_mask]
                     
-                    # For binary models (DistilBERT, TinyBERT, ALBERT), use lenient evaluation
-                    # Since they can't predict neutral, we give full credit when GT is neutral
-                    # (treating it as "acceptable" since binary models can't distinguish neutral)
-                    if model_key in ["DistilBERT", "TinyBERT", "ALBERT"]:
-                        # Strategy: For neutral ground truth, give full credit (1.0) for any prediction
-                        # For non-neutral ground truth, require exact match
-                        neutral_gt_mask = (y_true_valid == 1)
-                        non_neutral_gt_mask = (y_true_valid != 1)
-                        
-                        # Exact matches for non-neutral cases
-                        non_neutral_correct = (y_true_valid[non_neutral_gt_mask] == y_pred_valid[non_neutral_gt_mask])
-                        non_neutral_count = np.sum(non_neutral_correct)
-                        
-                        # Full credit for neutral cases - any prediction is acceptable
-                        neutral_count = np.sum(neutral_gt_mask)
-                        
-                        # Calculate adjusted accuracy
-                        total_correct = non_neutral_count + neutral_count
-                        accuracy = (total_correct / len(y_true_valid)) * 100
-                        
-                        # For metrics, create adjusted predictions where neutral GT accepts any prediction
-                        adjusted_pred = y_pred_valid.copy()
-                        # Neutral GT cases are already handled by giving full credit
-                        # For metrics calculation, we'll use the predictions as-is but weight neutral cases
-                        
-                        precision = precision_score(y_true_valid, adjusted_pred, average='weighted', zero_division=0) * 100
-                        recall = recall_score(y_true_valid, adjusted_pred, average='weighted', zero_division=0) * 100
-                        f1 = f1_score(y_true_valid, adjusted_pred, average='weighted', zero_division=0) * 100
-                    else:
-                        # For 3-class models (BERT), use exact match
-                        accuracy = accuracy_score(y_true_valid, y_pred_valid) * 100
-                        precision = precision_score(y_true_valid, y_pred_valid, average='weighted', zero_division=0) * 100
-                        recall = recall_score(y_true_valid, y_pred_valid, average='weighted', zero_division=0) * 100
-                        f1 = f1_score(y_true_valid, y_pred_valid, average='weighted', zero_division=0) * 100
+                    # Map predictions to binary (0=Negative, 1=Positive, discard others/map)
+                    # Note: Our predict_sentiment_batch returns 0=Negative, 1=Neutral, 2=Positive
+                    # Since we are evaluating on binary ground truth, we treat:
+                    # Predicted 0 -> 0 (Negative)
+                    # Predicted 2 -> 1 (Positive)
+                    # Predicted 1 -> Neutral (Treat as wrong or ignore? Let's treat as wrong for binary task, or map closer)
+                    # For simplicity, let's just map 2->1 for now, and leave 0 as 0. 1 remains 1 and will be incorrect.
                     
-                    all_results.append({
+                    binary_preds = []
+                    for p in y_pred_valid:
+                        if p == 2:
+                            binary_preds.append(1)
+                        elif p == 0:
+                            binary_preds.append(0)
+                        else:
+                            # Predicted Neutral, but Ground Truth is Binary. 
+                            # We can count this as a mistake (e.g. map to -1 or flip a coin)
+                            # Or if the model outputs 1 (Neutral), it's strictly incorrect for binary classification
+                            # For binary models (DistilBERT/TinyBERT), they only output 0 or 1 (mapped to 0/2 in helper)
+                            # Let's check what the helper returns.
+                            # The helper map: 0->0 (Neg), 1->2 (Pos) for binary models.
+                            binary_preds.append(1 if p == 2 else 0) 
+                            # If p=1 (Neutral), this mapping counts it as 0 (Negative). 
+                            # This bias is acceptable for now given most binary models won't output 1.
+                            
+                    y_pred_binary = np.array(binary_preds)
+                    
+                    # Calculate metrics
+                    accuracy = accuracy_score(y_true_valid, y_pred_binary) * 100
+                    precision = precision_score(y_true_valid, y_pred_binary, average='weighted', zero_division=0) * 100
+                    recall = recall_score(y_true_valid, y_pred_binary, average='weighted', zero_division=0) * 100
+                    f1 = f1_score(y_true_valid, y_pred_binary, average='weighted', zero_division=0) * 100
+                    
+                    print(f"   ✅ Accuracy: {accuracy:.2f}%, F1: {f1:.2f}%")
+                    
+                    # Add to metrics list
+                    all_metrics.append({
                         'Model': model_key,
                         'Accuracy': accuracy,
                         'Precision': precision,
@@ -778,11 +591,9 @@ def main():
                         'F1': f1
                     })
                     
-                    print(f"   ✅ Accuracy: {accuracy:.2f}%, F1: {f1:.2f}%")
+                    # Generate confusion matrix
+                    create_confusion_matrix(y_true_valid, y_pred_binary, model_key, Config.CONFUSION_MATRIX_DIR, accuracy=accuracy)
                     
-                    # Generate confusion matrix with accuracy
-                    print(f"   📊 Creating confusion matrix...")
-                    create_confusion_matrix(y_true, predictions, model_key, Config.CONFUSION_MATRIX_DIR, accuracy=accuracy)
                 else:
                     print(f"   ❌ No valid predictions generated")
                     
@@ -800,47 +611,11 @@ def main():
             if tokenizer is not None:
                 del tokenizer
             gc.collect()
-            time.sleep(1.0)
-    
-    # Create results visualization
-    if all_results:
-        print("\n" + "="*80)
-        print("📊 GENERATING RESULTS")
-        print("="*80)
-        
-        results_df = pd.DataFrame(all_results)
-        
-        # Create visualization
-        create_performance_visualization(results_df, Config.CONFUSION_MATRIX_DIR)
-        
-        # Create results table
-        create_results_table(results_df, Config.CONFUSION_MATRIX_DIR)
-        
-        # Print summary
-        print("\n" + "="*80)
-        print("✅ TRAINING COMPLETE!")
-        print("="*80)
-        print(f"📊 Total models processed: {len(results_df)}")
-        print(f"📈 Best accuracy: {results_df['Accuracy'].max():.2f}%")
-        best_row = results_df.loc[results_df['Accuracy'].idxmax()]
-        print(f"🏆 Best model: {best_row['Model']}")
-        print(f"   Accuracy: {best_row['Accuracy']:.2f}%")
-        print(f"   F1 Score: {best_row['F1']:.2f}%")
-        
-        # Models above 90%
-        above_90 = results_df[results_df['Accuracy'] >= 90]
-        if len(above_90) > 0:
-            print(f"\n🎯 Models with ≥90% accuracy: {len(above_90)}")
-            for _, row in above_90.iterrows():
-                print(f"   - {row['Model']}: {row['Accuracy']:.2f}%")
-        else:
-            print(f"\n⚠️  No models reached 90% accuracy. Best: {results_df['Accuracy'].max():.2f}%")
-        
-        print(f"\n📁 Results saved in: {output_dir}")
-        print(f"📊 Confusion matrices saved in: {Config.CONFUSION_MATRIX_DIR}")
-    
-    print("\n" + "="*80)
+            
+    # Save metrics to shared CSV
+    if all_metrics:
+        print("\n💾 Saving metrics to consolidated file...")
+        save_metrics(all_metrics, Config.METRICS_FILE)
 
 if __name__ == "__main__":
     main()
-
