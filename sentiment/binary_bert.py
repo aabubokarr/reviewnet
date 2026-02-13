@@ -329,29 +329,91 @@ def load_data_enhanced():
 # ============================================================================
 # Confusion Matrix Generation
 # ============================================================================
-def create_confusion_matrix(y_true, y_pred, model_name, output_dir, accuracy=None):
+# ============================================================================
+# Confusion Matrix Generation
+# ============================================================================
+def create_confusion_matrix(y_true, y_pred, model_name, embedding_name, output_dir, accuracy=None):
     """Create and save confusion matrix for a model with accuracy displayed"""
     try:
-        # Generate confusion matrix
-        cm = confusion_matrix(y_true, y_pred)
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
         
-        # Normalize confusion matrix
+        # Convert to numpy arrays and ensure they are 1D
+        y_true = np.array(y_true).flatten()
+        y_pred = np.array(y_pred).flatten()
+        
+        valid_mask = (y_pred != -1)
+        if np.sum(valid_mask) == 0:
+            print(f"      ⚠️  No valid predictions for {model_name}")
+            return False
+        
+        y_true_valid = y_true[valid_mask]
+        y_pred_valid = y_pred[valid_mask]
+        
+        # Binary classification: 0 (Negative) vs 1 (Positive)
+        labels = [0, 1]
+        display_labels = ['Negative', 'Positive']
+        
+        cm = confusion_matrix(y_true_valid, y_pred_valid, labels=labels)
+        
+        # Normalize confusion matrix by row (each row sums to 1.0)
         cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm_normalized = np.nan_to_num(cm_normalized)
         
-        # Plot confusion matrix
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(cm_normalized, annot=True, fmt='.2f', cmap='Blues', 
-                    xticklabels=['Negative', 'Positive'], yticklabels=['Negative', 'Positive'])
-        plt.title(f'Confusion Matrix - {model_name}\nAccuracy: {accuracy:.2f}%')
-        plt.xlabel('Predicted')
-        plt.ylabel('Actual')
+        if accuracy is None:
+            accuracy = accuracy_score(y_true_valid, y_pred_valid) * 100
+        
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Create custom annotations with decimal values (0 to 1)
+        annot_data = np.empty_like(cm_normalized, dtype=object)
+        for i in range(cm_normalized.shape[0]):
+            for j in range(cm_normalized.shape[1]):
+                value = cm_normalized[i, j]
+                annot_data[i, j] = f'{value:.3f}'
+        
+        # Create heatmap with normalized values (0 to 1)
+        heatmap = sns.heatmap(cm_normalized, annot=annot_data, fmt='', cmap='Blues', 
+                             xticklabels=display_labels, yticklabels=display_labels, ax=ax,
+                             cbar_kws={'label': 'Normalized Value'},
+                             linewidths=2, linecolor='white', 
+                             annot_kws={'size': 20, 'weight': 'bold'},
+                             vmin=0, vmax=1)
+        
+        # Set dynamic font colors based on cell background brightness
+        text_idx = 0
+        for i in range(cm_normalized.shape[0]):
+            for j in range(cm_normalized.shape[1]):
+                if text_idx < len(ax.texts):
+                    value = cm_normalized[i, j]
+                    text_color = 'black' if value < 0.4 else 'white'
+                    ax.texts[text_idx].set_color(text_color)
+                    text_idx += 1
+        
+        # Set title with accuracy
+        title = f'{model_name} - Confusion Matrix (Normalized)\nAccuracy: {accuracy:.2f}%'
+        ax.set_title(title, fontsize=20, fontweight='bold', pad=25)
+        ax.set_xlabel('Predicted', fontsize=18, fontweight='bold')
+        ax.set_ylabel('Actual', fontsize=18, fontweight='bold')
+        
+        # Adjust tick labels
+        ax.tick_params(axis='both', which='major', labelsize=16)
+        
+        # Increase colorbar label and tick font sizes
+        cbar = ax.collections[0].colorbar
+        cbar.set_label('Normalized Value', fontsize=18, fontweight='bold')
+        cbar.ax.tick_params(labelsize=16)
+        
         plt.tight_layout()
         
         # Save confusion matrix
-        save_path = os.path.join(output_dir, f'{model_name.replace("/", "_")}_confusion_matrix.png')
-        plt.savefig(save_path)
+        safe_model_name = model_name.replace("/", "_").replace(" ", "_")
+        filename = f"{safe_model_name}_confusion_matrix.png"
+        filepath = os.path.join(output_dir, filename)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight', facecolor='white')
         plt.close()
-        print(f"   📊 Saved confusion matrix to {save_path}")
+        
+        print(f"   📊 Saved confusion matrix to {filepath}")
         return True
     
     except Exception as e:
@@ -382,6 +444,155 @@ def save_metrics(metrics_list, output_file):
     except Exception as e:
         print(f"   ❌ Error saving metrics: {e}")
         return False
+
+# ============================================================================
+# Visualization Functions
+# ============================================================================
+def create_performance_visualization(results_df, output_dir):
+    """Create performance visualization with same blue color and different bar patterns"""
+    try:
+        fig, axes = plt.subplots(2, 2, figsize=(20, 16))
+        fig.suptitle('BERT Model Performance Comparison', 
+                     fontsize=24, fontweight='bold', y=0.98)
+        
+        # Use Model as unique identifier
+        models = results_df['Model'].unique()
+        
+        # Use white color for bars with black edges
+        base_color = 'white'
+        
+        # Define different bar patterns/styles
+        bar_styles = [
+            {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': None},
+            {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '///'},
+            {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '---'},
+            {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '|||'},
+            {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': '+++'},
+            {'color': base_color, 'alpha': 1.0, 'edgecolor': 'black', 'linewidth': 2.5, 'hatch': 'xxx'},
+        ]
+        
+        metrics = [('Accuracy', axes[0, 0]), ('Precision', axes[0, 1]), 
+                   ('Recall', axes[1, 0]), ('F1', axes[1, 1])]
+        
+        for metric, ax in metrics:
+            x_pos = np.arange(len(models))
+            scores = []
+            for model in models:
+                model_data = results_df[results_df['Model'] == model]
+                scores.append(model_data[metric].values[0] if not model_data.empty else 0)
+            
+            # Create bars with different patterns
+            bars = []
+            for i, (x, score) in enumerate(zip(x_pos, scores)):
+                style = bar_styles[i % len(bar_styles)]
+                bar = ax.bar(x, score, width=0.7, 
+                            color=style['color'], 
+                            alpha=style['alpha'],
+                            edgecolor=style['edgecolor'],
+                            linewidth=style['linewidth'],
+                            hatch=style['hatch'])
+                bars.append(bar[0])
+            
+            for i, v in enumerate(scores):
+                if v > 0:
+                    ax.text(i, v + 1, f'{v:.1f}%', 
+                           ha='center', va='bottom', fontsize=20, fontweight='bold')
+            
+            ax.set_title(f'{metric} Comparison', fontsize=20, fontweight='bold', pad=15)
+            ax.set_xlabel('Models', fontsize=18, fontweight='bold')
+            ax.set_ylabel(f'{metric} (%)', fontsize=18, fontweight='bold')
+            ax.set_xticks(x_pos)
+            ax.set_xticklabels(models, rotation=45, ha='right', fontsize=16)
+            ax.tick_params(axis='y', labelsize=16)
+            ax.grid(axis='y', alpha=0.3, linestyle='--', linewidth=1.5)
+            ax.set_ylim(0, 105)
+        
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'model_comparison.png'), dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"📊 Visualization saved: {os.path.join(output_dir, 'model_comparison.png')}")
+        
+    except Exception as e:
+        print(f"   ❌ Error creating visualization: {e}")
+
+def create_results_table(results_df, output_dir):
+    """Create a professional results table"""
+    try:
+        fig, ax = plt.subplots(figsize=(20, max(12, len(results_df) * 1.5 + 3)))
+        ax.axis('tight')
+        ax.axis('off')
+        
+        # Prepare table data
+        table_data = [['Model', 'Accuracy (%)', 'Precision (%)', 'Recall (%)', 'F1 Score (%)']]
+        
+        # Sort by accuracy descending
+        sorted_df = results_df.sort_values('Accuracy', ascending=False)
+        
+        for _, row in sorted_df.iterrows():
+            table_data.append([
+                row['Model'],
+                f"{row['Accuracy']:.2f}",
+                f"{row['Precision']:.2f}",
+                f"{row['Recall']:.2f}",
+                f"{row['F1']:.2f}"
+            ])
+        
+        # Create table
+        table = ax.table(
+            cellText=table_data,
+            cellLoc='center',
+            loc='center',
+            colWidths=[0.3, 0.15, 0.15, 0.15, 0.15]
+        )
+        
+        # Style the table
+        table.auto_set_font_size(False)
+        table.set_fontsize(18)
+        table.scale(1, 2.8)
+        
+        # Header row styling
+        for i in range(len(table_data[0])):
+            table[(0, i)].set_facecolor('#2E86AB')
+            table[(0, i)].set_text_props(weight='bold', color='white', size=20)
+        
+        # Data row styling
+        for i in range(1, len(table_data)):
+            row_accuracy = float(table_data[i][1].replace('%', ''))
+            
+            if row_accuracy >= 90:
+                row_color = '#E8F4F8'
+            else:
+                row_color = '#F8F9FA' if i % 2 == 0 else '#FFFFFF'
+            
+            for j in range(len(table_data[0])):
+                table[(i, j)].set_facecolor(row_color)
+                table[(i, j)].set_text_props(size=18)
+                
+                if j == 1 and row_accuracy >= 90:
+                    table[(i, j)].set_text_props(size=18, weight='bold')
+        
+        # Add borders
+        for i in range(len(table_data)):
+            for j in range(len(table_data[0])):
+                table[(i, j)].set_edgecolor('#CCCCCC')
+                table[(i, j)].set_linewidth(1)
+        
+        plt.title('BERT Model Performance Results Table', 
+                  fontsize=22, fontweight='bold', pad=30)
+        plt.tight_layout()
+        
+        # Save table
+        table_path = os.path.join(output_dir, 'model_results_table.png')
+        plt.savefig(table_path, dpi=300, bbox_inches='tight', facecolor='white')
+        plt.savefig(os.path.join(output_dir, 'model_results_table.pdf'), 
+                    dpi=300, bbox_inches='tight', facecolor='white')
+        plt.close()
+        
+        print(f"📋 Results table saved: {table_path}")
+        print(f"📋 PDF table saved: {os.path.join(output_dir, 'model_results_table.pdf')}")
+        
+    except Exception as e:
+        print(f"   ❌ Error creating results table: {e}")
 
 # ============================================================================
 # Main Training Function
@@ -592,7 +803,7 @@ def main():
                     })
                     
                     # Generate confusion matrix
-                    create_confusion_matrix(y_true_valid, y_pred_binary, model_key, Config.CONFUSION_MATRIX_DIR, accuracy=accuracy)
+                    create_confusion_matrix(y_true_valid, y_pred_binary, model_key, "Fine-tuned", Config.CONFUSION_MATRIX_DIR, accuracy=accuracy)
                     
                 else:
                     print(f"   ❌ No valid predictions generated")
@@ -616,6 +827,12 @@ def main():
     if all_metrics:
         print("\n💾 Saving metrics to consolidated file...")
         save_metrics(all_metrics, Config.METRICS_FILE)
+        
+        # Generate visualization and table
+        print("\n📊 Generating performance visualization and tables...")
+        results_df = pd.DataFrame(all_metrics)
+        create_performance_visualization(results_df, Config.CONFUSION_MATRIX_DIR)
+        create_results_table(results_df, Config.CONFUSION_MATRIX_DIR)
 
 if __name__ == "__main__":
     main()

@@ -15,11 +15,11 @@ Welcome to the **ReviewNet** project! This README provides an overview of the pr
 
 ## Visit
 
-- [Repository](https://github.com/woabu0/reviewnet)
+- [Repository](https://github.com/aabubokarr/reviewnet)
 
 ## About
 
-**ReviewNet** is a comprehensive data analysis framework designed to extract deep insights from mobile application reviews. By leveraging state-of-the-art Natural Language Processing (NLP) models—including discriminative transformers (BERT, RoBERTa) and novel tabular deep learning approaches (TabPFN)—it provides robust analysis of user sentiment, emotional undertones, and content toxicity.
+ReviewNet is a cutting-edge NLP toolkit for review analysis. Utilizing BERT, TabPFN, and ML, it provides deep insights through Sentiment, Emotion, and Toxicity detection. Features automated scraping, theme categorization, and professional visualizations (Confusion Matrices, Word Clouds) for data-driven decisions.
 
 ## Features
 
@@ -35,7 +35,7 @@ Welcome to the **ReviewNet** project! This README provides an overview of the pr
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/woabu0/reviewnet.git
+   git clone https://github.com/aabubokarr/reviewnet.git
    ```
 
 2. Navigate to the project directory:
@@ -113,8 +113,8 @@ reviewnet/
 ## Contributors
 
 <p align="center">
-  <a href="https://github.com/woabu0/reviewnet/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=woabu0/reviewnet" alt="Contributors" />
+  <a href="https://github.com/aabubokarr/reviewnet/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=aabubokarr/reviewnet" alt="Contributors" />
   </a>
 </p>
 
