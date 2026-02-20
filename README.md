@@ -71,16 +71,6 @@ reviewnet/
 │   ├── theme_emotion_analysis/ # Theme-based analysis results & graphs
 │   ├── emotion_analysis.py     # Core emotion detection logic
 │   └── theme_emotion_analysis.py # Theme-specific emotion analysis
-├── negative_dataset/           # Datasets containing negative reviews
-│   ├── coopers.csv
-│   ├── foodi.csv
-│   ├── kfc.csv
-│   ├── khabarkoi.csv
-│   ├── khaodao.csv
-│   ├── munchies.csv
-│   ├── pizzahut.csv
-│   ├── proyojon.csv
-│   └── sultansdine.csv
 ├── scraper/                    # Google Play Store review scraper
 │   ├── main.py                 # Scraper entry point
 │   └── filter.py               # Data filtering utilities

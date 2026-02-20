@@ -15,3 +15,5 @@ einops
 xgboost
 lightgbm
 catboost
+sentencepiece
+protobuf
