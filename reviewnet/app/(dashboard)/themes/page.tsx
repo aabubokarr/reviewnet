@@ -50,7 +50,6 @@ export default function ThemesPage() {
         </div>
       </div>
 
-      {/* Theme Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {themeDistribution.map((t, i) => (
           <div key={t.theme} className="glass-card rounded-xl p-4">

@@ -11,7 +11,6 @@ export default function SettingsPage() {
         <p className="mt-1 text-muted-foreground">Configure your ReviewNet preferences.</p>
       </div>
 
-      {/* General */}
       <div className="glass-card rounded-xl p-5 space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-primary" /> General
@@ -32,7 +31,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Data */}
       <div className="glass-card rounded-xl p-5 space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Database className="h-5 w-5 text-primary" /> Data Settings
@@ -53,7 +51,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Notifications */}
       <div className="glass-card rounded-xl p-5 space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Bell className="h-5 w-5 text-primary" /> Notifications

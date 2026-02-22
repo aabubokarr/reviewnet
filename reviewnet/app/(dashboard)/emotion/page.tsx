@@ -45,7 +45,6 @@ export default function EmotionPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Emotion Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {emotionDistribution.map((e, i) => (
           <div key={e.emotion} className="glass-card rounded-xl p-4">

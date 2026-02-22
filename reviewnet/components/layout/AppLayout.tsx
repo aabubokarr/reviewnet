@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { title: "Dashboard", icon: LayoutDashboard, path: "/" },
+  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { title: "Sentiment", icon: TrendingUp, path: "/sentiment" },
   { title: "Emotions", icon: Heart, path: "/emotion" },
   { title: "Toxicity", icon: ShieldAlert, path: "/toxicity" },

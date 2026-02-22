@@ -71,6 +71,18 @@ reviewnet/
 │   ├── theme_emotion_analysis/ # Theme-based analysis results & graphs
 │   ├── emotion_analysis.py     # Core emotion detection logic
 │   └── theme_emotion_analysis.py # Theme-specific emotion analysis
+├── reviewnet/                  # Next.js Intelligent Dashboard (Web App)
+│   ├── app/                    # App Router (Dashboard & Landing Page)
+│   │   ├── (dashboard)/        # Internal dashboard routes
+│   │   └── layout.tsx          # Root layout & providers
+│   ├── components/             # Reusable UI components
+│   │   ├── dashboard/          # Metric cards & widgets
+│   │   ├── layout/             # Sidebar & Header
+│   │   └── ui/                 # Atomic design components (Shadcn)
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # Utilities, Mock Data & Visuals
+│   ├── public/                 # Static assets & icons
+│   └── package.json            # Web app dependencies
 ├── scraper/                    # Google Play Store review scraper
 │   ├── main.py                 # Scraper entry point
 │   └── filter.py               # Data filtering utilities

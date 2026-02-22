@@ -21,10 +21,9 @@ import {
     danger: "bg-destructive",
   };
   
-  export default function Index() {
+  export default function Dashboard() {
     return (
       <div className="space-y-6 animate-fade-in">
-        {/* Welcome */}
         <div>
           <h1 className="text-3xl font-bold">
             Welcome back, <span className="gradient-text">Admin</span>
@@ -34,7 +33,6 @@ import {
           </p>
         </div>
   
-        {/* Metric Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <MetricCard title="Total Reviews" value={dashboardStats.totalReviews.toLocaleString()} trend={dashboardStats.totalReviewsTrend} icon={BarChart3} />
           <MetricCard title="Positive" value={`${dashboardStats.positivePct}%`} trend={3.2} icon={TrendingUp} variant="success" />
@@ -44,9 +42,7 @@ import {
           <MetricCard title="Active Apps" value={dashboardStats.activeApps} trend={8.3} icon={Activity} />
         </div>
   
-        {/* Charts Row */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Sentiment Over Time */}
           <div className="glass-card rounded-xl p-5 lg:col-span-2">
             <h3 className="mb-4 text-lg font-semibold">Sentiment Trend</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -79,7 +75,6 @@ import {
             </ResponsiveContainer>
           </div>
   
-          {/* Sentiment Pie */}
           <div className="glass-card rounded-xl p-5">
             <h3 className="mb-4 text-lg font-semibold">Sentiment Split</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -111,9 +106,7 @@ import {
           </div>
         </div>
   
-        {/* Bottom Row */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Top Apps */}
           <div className="glass-card rounded-xl p-5">
             <h3 className="mb-4 text-lg font-semibold">Top Apps by Volume</h3>
             <ResponsiveContainer width="100%" height={280}>
@@ -134,7 +127,6 @@ import {
             </ResponsiveContainer>
           </div>
   
-          {/* Recent Activity */}
           <div className="glass-card rounded-xl p-5">
             <h3 className="mb-4 text-lg font-semibold flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" /> Recent Activity
@@ -156,4 +148,3 @@ import {
       </div>
     );
   }
-  

@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryProvider>
           <TooltipProvider>
-            <AppLayout>{children}</AppLayout>
+            {children}
             <Toaster />
             <Sonner />
           </TooltipProvider>

@@ -28,14 +28,12 @@ export default function SentimentPage() {
         <p className="mt-1 text-muted-foreground">Comprehensive sentiment breakdown of app reviews.</p>
       </div>
 
-      {/* Overview Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard title="Positive Reviews" value={`${dashboardStats.positivePct}%`} subtitle="15,906 reviews" trend={3.2} icon={ThumbsUp} variant="success" />
         <MetricCard title="Neutral Reviews" value={`${dashboardStats.neutralPct}%`} subtitle="4,474 reviews" icon={Minus} variant="info" />
         <MetricCard title="Negative Reviews" value={`${dashboardStats.negativePct}%`} subtitle="4,473 reviews" trend={-2.1} icon={ThumbsDown} variant="danger" />
       </div>
 
-      {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="glass-card rounded-xl p-5 lg:col-span-2">
           <h3 className="mb-4 text-lg font-semibold">Sentiment Over Time</h3>
@@ -72,7 +70,6 @@ export default function SentimentPage() {
         </div>
       </div>
 
-      {/* Sentiment by App */}
       <div className="glass-card rounded-xl p-5">
         <h3 className="mb-4 text-lg font-semibold">Sentiment by App</h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -89,7 +86,6 @@ export default function SentimentPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Reviews Table */}
       <div className="glass-card rounded-xl p-5">
         <h3 className="mb-4 text-lg font-semibold">Recent Reviews</h3>
         <div className="overflow-x-auto">

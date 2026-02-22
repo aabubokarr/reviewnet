@@ -41,7 +41,6 @@ export default function ToxicityPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Flagged Reviews */}
       <div className="glass-card rounded-xl p-5">
         <h3 className="mb-4 text-lg font-semibold text-destructive flex items-center gap-2">
           <ShieldAlert className="h-5 w-5" /> Flagged Reviews
