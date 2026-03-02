@@ -35,7 +35,7 @@ export default function EmotionPage() {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,22%)" />
             <XAxis type="number" stroke="hsl(215,20%,65%)" fontSize={12} />
             <YAxis dataKey="emotion" type="category" stroke="hsl(215,20%,65%)" fontSize={12} width={100} />
-            <Tooltip contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }} />
+            <Tooltip cursor={false} contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }} />
             <Bar dataKey="count" radius={[0, 6, 6, 0]}>
               {emotionDistribution.map((_, i) => (
                 <Cell key={i} fill={EMOTION_COLORS[i]} />

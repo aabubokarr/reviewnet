@@ -4,7 +4,7 @@ import { TrendingUp, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
 import MetricCard from "@/components/dashboard/MetricCard";
 import {
   dashboardStats, sentimentOverTime, sentimentDistribution,
-  sentimentByApp, sampleReviews,
+  sentimentByTheme, sampleReviews,
 } from "@/lib/mock-data";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -25,7 +25,7 @@ export default function SentimentPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold">Sentiment Analysis</h1>
-        <p className="mt-1 text-muted-foreground">Comprehensive sentiment breakdown of app reviews.</p>
+        <p className="mt-1 text-muted-foreground">Comprehensive sentiment breakdown of theme reviews.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -48,7 +48,7 @@ export default function SentimentPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,22%)" />
               <XAxis dataKey="month" stroke="hsl(215,20%,65%)" fontSize={12}/>
               <YAxis stroke="hsl(215,20%,65%)" fontSize={12}/>
-              <Tooltip contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }}/>
+              <Tooltip cursor={false} contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }}/>
               <Area type="monotone" dataKey="positive" stroke="hsl(160,84%,39%)" fill="url(#sg1)" strokeWidth={2}/>
               <Area type="monotone" dataKey="neutral" stroke="hsl(217,91%,60%)" fill="transparent" strokeWidth={2}/>
               <Area type="monotone" dataKey="negative" stroke="hsl(0,84%,60%)" fill="transparent" strokeWidth={2}/>
@@ -60,7 +60,7 @@ export default function SentimentPage() {
           <h3 className="mb-4 text-lg font-semibold">Distribution</h3>
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
-              <Pie data={sentimentDistribution} cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={4} dataKey="value">
+              <Pie data={sentimentDistribution} cx="50%" cy="50%" outerRadius={95} paddingAngle={0} stroke="none" dataKey="value">
                 {sentimentDistribution.map((_, i) => <Cell key={i} fill={COLORS[i]}/>)}
               </Pie>
               <Tooltip contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }}/>
@@ -71,13 +71,13 @@ export default function SentimentPage() {
       </div>
 
       <div className="glass-card rounded-xl p-5">
-        <h3 className="mb-4 text-lg font-semibold">Sentiment by App</h3>
+        <h3 className="mb-4 text-lg font-semibold">Sentiment by Theme</h3>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sentimentByApp}>
+          <BarChart data={sentimentByTheme}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,22%)" />
-            <XAxis dataKey="app" stroke="hsl(215,20%,65%)" fontSize={12}/>
+            <XAxis dataKey="theme" stroke="hsl(215,20%,65%)" fontSize={12}/>
             <YAxis stroke="hsl(215,20%,65%)" fontSize={12}/>
-            <Tooltip contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }}/>
+            <Tooltip cursor={false} contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }}/>
             <Legend formatter={(v) => <span className="text-sm text-muted-foreground capitalize">{v}</span>}/>
             <Bar dataKey="positive" fill="hsl(160,84%,39%)" radius={[4,4,0,0]}/>
             <Bar dataKey="neutral" fill="hsl(217,91%,60%)" radius={[4,4,0,0]}/>
@@ -93,7 +93,7 @@ export default function SentimentPage() {
             <thead>
               <tr className="border-b border-border text-muted-foreground">
                 <th className="py-3 pr-4 text-left font-medium">Review</th>
-                <th className="py-3 px-4 text-left font-medium">App</th>
+                <th className="py-3 px-4 text-left font-medium">Theme</th>
                 <th className="py-3 px-4 text-left font-medium">Sentiment</th>
                 <th className="py-3 px-4 text-left font-medium">Confidence</th>
                 <th className="py-3 pl-4 text-left font-medium">Date</th>
@@ -103,7 +103,7 @@ export default function SentimentPage() {
               {sampleReviews.map((r) => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-accent/50 transition-colors">
                   <td className="py-3 pr-4 max-w-xs truncate">{r.content}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{r.app}</td>
+                  <td className="py-3 px-4 text-muted-foreground">{r.theme}</td>
                   <td className="py-3 px-4">
                     <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", sentimentBadge[r.sentiment])}>
                       {r.sentiment}

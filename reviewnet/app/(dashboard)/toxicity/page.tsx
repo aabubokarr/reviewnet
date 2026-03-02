@@ -2,7 +2,7 @@
 
 import { ShieldAlert, ShieldCheck, AlertTriangle } from "lucide-react";
 import MetricCard from "@/components/dashboard/MetricCard";
-import { toxicityByApp, sampleReviews } from "@/lib/mock-data";
+import { toxicityByTheme, sampleReviews } from "@/lib/mock-data";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
@@ -15,7 +15,7 @@ export default function ToxicityPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold">Toxicity Detection</h1>
-        <p className="mt-1 text-muted-foreground">Monitor and manage toxic content across your apps.</p>
+        <p className="mt-1 text-muted-foreground">Monitor and manage toxic content across your themes.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -26,17 +26,17 @@ export default function ToxicityPage() {
       </div>
 
       <div className="glass-card rounded-xl p-5">
-        <h3 className="mb-4 text-lg font-semibold">Toxicity by App</h3>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={toxicityByApp}>
+        <h3 className="mb-4 text-lg font-semibold">Toxicity by Theme</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={toxicityByTheme}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,22%)" />
-            <XAxis dataKey="app" stroke="hsl(215,20%,65%)" fontSize={12} />
+            <XAxis dataKey="theme" stroke="hsl(215,20%,65%)" fontSize={12} />
             <YAxis stroke="hsl(215,20%,65%)" fontSize={12} />
-            <Tooltip contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }} />
+            <Tooltip cursor={false} contentStyle={{ background:"hsl(217,33%,17%)", border:"1px solid hsl(217,33%,30%)", borderRadius:"8px", color:"hsl(210,40%,98%)" }} />
             <Legend formatter={(v) => <span className="text-sm text-muted-foreground capitalize">{v}</span>} />
-            <Bar dataKey="low" stackId="a" fill="hsl(160,84%,39%)" />
-            <Bar dataKey="medium" stackId="a" fill="hsl(38,92%,50%)" />
-            <Bar dataKey="high" stackId="a" fill="hsl(0,84%,60%)" radius={[4,4,0,0]} />
+            <Bar dataKey="low" fill="hsl(160,84%,39%)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="medium" fill="hsl(38,92%,50%)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="high" fill="hsl(0,84%,60%)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -49,7 +49,7 @@ export default function ToxicityPage() {
           {highToxReviews.map((r) => (
             <div key={r.id} className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">{r.app}</span>
+                <span className="text-sm font-medium">{r.theme}</span>
                 <span className="text-xs rounded-full bg-destructive/15 text-destructive px-2 py-0.5 font-medium">
                   Score: {r.toxicity.toFixed(2)}
                 </span>

@@ -15,7 +15,6 @@ const navItems = [
   { title: "Sentiment", icon: TrendingUp, path: "/sentiment" },
   { title: "Emotions", icon: Heart, path: "/emotion" },
   { title: "Toxicity", icon: ShieldAlert, path: "/toxicity" },
-  { title: "Word Clouds", icon: Cloud, path: "/wordclouds" },
   { title: "Themes", icon: Layers, path: "/themes" },
   { title: "Scraper", icon: Download, path: "/scraper" },
   { title: "Reports", icon: FileText, path: "/reports" },
